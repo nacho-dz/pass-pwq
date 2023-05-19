@@ -1,3 +1,7 @@
+# Copyright (C) 2023 Listeria monocytogenes <listeria@disroot.org>
+# Copyright (C) 2012 - 2018 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+# This file is licensed under the GPLv3+. Please see COPYING for more information.
+
 GENERATED_STRENGTH="${PASSWORD_STORE_PWQ_GENERATED_STRENGTH:-96}"
 MINIMUM_SCORE=${PASSWORD_STORE_PWQ_MINIMUM_SCORE:-50}
 
@@ -43,6 +47,60 @@ cmd_pwq_usage() {
 	More information may be found in the pass-pwq(1) man page.
 	_EOF
 }
+
+cmd_pwq_generate() {
+	local opts qrcode=0 clip=0 force=0 inplace=0 pass
+	opts="$($GETOPT -o qcif -l qrcode,clip,in-place,force -n "$PROGRAM" -- "$@")"
+	local err=$?
+	eval set -- "$opts"
+	while true; do case $1 in
+		-q|--qrcode) qrcode=1; shift ;;
+		-c|--clip) clip=1; shift ;;
+		-f|--force) force=1; shift ;;
+		-i|--in-place) inplace=1; shift ;;
+		--) shift; break ;;
+	esac done
+
+	[[ $err -ne 0 || ( $# -ne 2 && $# -ne 1 ) || ( $force -eq 1 && $inplace -eq 1 ) || ( $qrcode -eq 1 && $clip -eq 1 ) ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [--clip,-c] [--qrcode,-q] [--in-place,-i | --force,-f] pass-name [entropy-bits]"
+	local path="$1"
+	local bits="${2:-$GENERATED_STRENGTH}"
+	check_sneaky_paths "$path"
+	[[ $bits =~ ^[0-9]+$ ]] || die "Error: entropy-bits \"$bits\" must be a number."
+	[[ $bits -ge 56 && $bits -le 256 ]] || die "Error: entropy-bits must be between 56 and 256."
+	mkdir -p -v "$PREFIX/$(dirname -- "$path")"
+	set_gpg_recipients "$(dirname -- "$path")"
+	local passfile="$PREFIX/$path.gpg"
+	set_git "$passfile"
+
+	[[ $inplace -eq 0 && $force -eq 0 && -e $passfile ]] && yesno "An entry already exists for $path. Overwrite it?"
+
+	read -r pass < <(pwmake $bits)
+        [[ -n $pass ]] || die "Could not generate password with pwmake(1)."
+	if [[ $inplace -eq 0 ]]; then
+		echo "$pass" | $GPG -e "${GPG_RECIPIENT_ARGS[@]}" -o "$passfile" "${GPG_OPTS[@]}" || die "Password encryption aborted."
+	else
+		local passfile_temp="${passfile}.tmp.${RANDOM}.${RANDOM}.${RANDOM}.${RANDOM}.--"
+		if { echo "$pass"; $GPG -d "${GPG_OPTS[@]}" "$passfile" | tail -n +2; } | $GPG -e "${GPG_RECIPIENT_ARGS[@]}" -o "$passfile_temp" "${GPG_OPTS[@]}"; then
+			mv "$passfile_temp" "$passfile"
+		else
+			rm -f "$passfile_temp"
+			die "Could not reencrypt new password."
+		fi
+	fi
+	local verb="Add"
+	[[ $inplace -eq 1 ]] && verb="Replace"
+	git_add_file "$passfile" "$verb generated password for ${path}."
+
+	if [[ $clip -eq 1 ]]; then
+		clip "$pass" "$path"
+	elif [[ $qrcode -eq 1 ]]; then
+		qrcode "$pass" "$path"
+	else
+		printf "\e[1mThe generated password for \e[4m%s\e[24m is:\e[0m\n\e[1m\e[93m%s\e[0m\n" "$path" "$pass"
+	fi
+}
+
+SUBCOMMAND="$1"
 
 case "$1" in
 	help|--help) shift;		cmd_pwq_usage "$@" ;;
