@@ -100,6 +100,39 @@ cmd_pwq_generate() {
 	fi
 }
 
+cmd_pwq_score() {
+	local opts user selected_line
+	opts="$($GETOPT -o u:l: -l user:,line: -n "$PROGRAM" -- "$@")"
+	local err=$?
+	eval set -- "$opts"
+	while true; do case $1 in
+		-u|--user) user="$2"; shift 2 ;;
+		-l|--line) selected_line="$2"; shift 2 ;;
+		--) shift; break ;;
+	esac done
+
+	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [--user=user,-u user] [--line=line-number,-l line-number] pass-name"
+
+	local path="$1"
+	local passfile="$PREFIX/$path.gpg"
+	check_sneaky_paths "$path"
+	if [[ -f $passfile ]]; then
+		if [[ ${selected_line-1} -eq 1 ]]; then
+			score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | pwscore "${user:-${path##*/}}")"
+		else
+			[[ $selected_line =~ ^[0-9]+$ ]] || die "Line number '$selected_line' is not a number."
+			score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | sed -n ${selected_line}p | pwscore "${user:-${path##*/}}")"
+		fi || exit $?
+		echo "$path" "$score"
+	elif [[ -d $PREFIX/$path ]]; then
+		die "Error: $path is a directory."
+	elif [[ -z $path ]]; then
+		die "Error: password store is empty. Try \"pass init\"."
+	else
+		die "Error: $path is not in the password store."
+	fi
+}
+
 SUBCOMMAND="$1"
 
 case "$1" in
