@@ -48,6 +48,57 @@ cmd_pwq_usage() {
 	_EOF
 }
 
+cmd_pwq_find_weak() {
+	local opts user selected_line=1 min_score="$MINIMUM_SCORE"
+	opts="$($GETOPT -o u:l:m: -l user:,line:,min-score: -n "$PROGRAM" -- "$@")"
+	local err=$?
+	eval set -- "$opts"
+	while true; do case $1 in
+		-u|--user) user="$2"; shift 2 ;;
+		-l|--line) selected_line="$2"; shift 2 ;;
+		-m|--min-score) min_score="$2"; shift 2 ;;
+		--) shift; break ;;
+	esac done
+
+	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [--user=user,-u user] [--min-score=min-score,-m min-score] [subfolder]"
+
+	local relpath basename
+	local path="$1"
+	local passfile="$PREFIX/$path.gpg"
+	check_sneaky_paths "$path"
+	[[ ${selected_line-1} =~ ^[0-9]+$ ]] || die "Line number '$selected_line' is not a number."
+	[[ $min_score =~ ^[0-9]+$ ]] || die "Minimum score '$min_score' is not a number."
+	if [[ -f $passfile ]]; then
+		if [[ ${selected_line-1} -eq 1 ]]; then
+			score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | pwscore "${user:-${path##*/}}")"
+		else
+			score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | sed -n ${selected_line}p | pwscore "${user:-${path##*/}}")"
+		fi || exit $?
+		echo "$path" "$score"
+	elif [[ -d $PREFIX/$path ]]; then
+		if [[ -z $path ]]; then
+			echo "Password Store"
+		else
+			echo "${path%\/}"
+		fi
+		while IFS= read -r -d '' relpath; do
+			passfile="$PREFIX/$path/$relpath"
+			relpath="${relpath%.gpg}"
+			basename="${relpath##*/}"
+			if [[ ${selected_line-1} -eq 1 ]]; then
+				score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | pwscore "${user:-$basename}" 2>&-)"
+			else
+				score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | sed -n ${selected_line}p | pwscore "${user:-$basename}" 2>&-)"
+			fi
+			[[ $score -ge $min_score ]] || echo "$relpath" ${score:--}
+		done < <(find -L "$PREFIX/$path" -path "$PREFIX/.git" -prune -o -name '*.gpg' -printf '%P\0')
+	elif [[ -z $path ]]; then
+		die "Error: password store is empty. Try \"pass init\"."
+	else
+		die "Error: $path is not in the password store."
+	fi
+}
+
 cmd_pwq_generate() {
 	local opts qrcode=0 clip=0 force=0 inplace=0 pass
 	opts="$($GETOPT -o qcif -l qrcode,clip,in-place,force -n "$PROGRAM" -- "$@")"
