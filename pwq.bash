@@ -29,12 +29,12 @@ cmd_pwq_usage() {
 	        Prompt before overwriting existing password unless forced.
 	        Optionally replace only the first line of an existing file with a new password.
 	        More information may be found in the pwmake(1) man page.
-	    $PROGRAM pwq score [--user user] pass-name
+	    $PROGRAM pwq score [--user=user,-u user] [--line=line-number,-l line-number] pass-name
 	        Check the quality of a password.
 	        If provided, check similarity of the password to the username
 	        (use the password file's basename if unspecified).
 	        More information may be found in the pwscore(1) man page.
-	    $PROGRAM pwq find-weak [--user user] [--min-score min-score] [subfolder]
+	    $PROGRAM pwq find-weak [--user=user,-u user] [--min-score=min-score,-m min-score] [subfolder]
 	        Find passwords in this password storage which score lower than min-score
 	        (or $MINIMUM_SCORE if unspecified).
 	        The optional user argument is identical to that of the score sub-command.
