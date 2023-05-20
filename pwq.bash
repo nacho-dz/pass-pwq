@@ -3,7 +3,7 @@
 # This file is licensed under the GPLv3+. Please see COPYING for more information.
 
 GENERATED_STRENGTH="${PASSWORD_STORE_PWQ_GENERATED_STRENGTH:-96}"
-MINIMUM_SCORE=${PASSWORD_STORE_PWQ_MINIMUM_SCORE:-50}
+MINIMUM_SCORE="${PASSWORD_STORE_PWQ_MINIMUM_SCORE:-50}"
 
 cmd_pwq_version() {
 	cat <<-_EOF
