@@ -29,12 +29,12 @@ cmd_pwq_usage() {
 	        Prompt before overwriting existing password unless forced.
 	        Optionally replace only the first line of an existing file with a new password.
 	        More information may be found in the pwmake(1) man page.
-	    $PROGRAM pwq score [--user=user,-u user] [--line=line-number,-l line-number] pass-name
+	    $PROGRAM pwq score [-u, --user=user] [-l, --line=line-number] pass-name
 	        Check the quality of a password.
 	        If provided, check similarity of the password to the username
 	        (use the password file's basename if unspecified).
 	        More information may be found in the pwscore(1) man page.
-	    $PROGRAM pwq find-weak [--user=user,-u user] [--min-score=min-score,-m min-score] [subfolder]
+	    $PROGRAM pwq find-weak [-u, --user=user] [-m, --min-score=min-score] [subfolder]
 	        Find passwords in this password storage which score lower than min-score
 	        (or $MINIMUM_SCORE if unspecified).
 	        The optional user argument is identical to that of the score sub-command.
@@ -60,7 +60,7 @@ cmd_pwq_find_weak() {
 		--) shift; break ;;
 	esac done
 
-	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [--user=user,-u user] [--min-score=min-score,-m min-score] [subfolder]"
+	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [--user=user,-u user] [--line=line-number,-l line-number] [--min-score=min-score,-m min-score] [subfolder]"
 
 	local relpath basename
 	local path="$1"
@@ -162,7 +162,7 @@ cmd_pwq_score() {
 		--) shift; break ;;
 	esac done
 
-	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [--user=user,-u user] [--line=line-number,-l line-number] pass-name"
+	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [-u, --user=user] [-l, --line=line-number] pass-name"
 
 	local path="$1"
 	local passfile="$PREFIX/$path.gpg"
