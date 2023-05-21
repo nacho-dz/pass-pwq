@@ -172,7 +172,7 @@ SUBCOMMAND="$1"
 case "$1" in
 	help|--help) shift;		cmd_pwq_usage "$@" ;;
 	version|--version) shift;	cmd_pwq_version "$@" ;;
-	find-weak) shift;		cmd_pwq_find_weak "$@" ;;
+	find-weak|ls-weak) shift;	cmd_pwq_find_weak "$@" ;;
 	generate|make) shift;		cmd_pwq_generate "$@" ;;
 	score) shift;			cmd_pwq_score "$@" ;;
 	*)				cmd_pwq_usage "$@" ;;
