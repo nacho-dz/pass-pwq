@@ -1,0 +1,140 @@
+.TH PASS\-PWQ 1 "2023 May 20" "Password Store pwq extension"
+
+.SH NAME
+pass\-pwq \- A
+.BR pass (1)
+extension for password quality checking and generating random passwords.
+
+.SH SYNOPSIS
+.B pass pwq
+
+.I COMMAND
+] [
+.I OPTIONS
+]... [
+.I ARGS
+]...
+
+.SH DESCRIPTION
+
+.B pass\-pwq
+extends the
+.BR pass (1)
+utility with the
+.B pwq
+command for generating secure, memorable passwords and checking the quality of
+passwords.
+
+If no COMMAND is specified, COMMAND defaults to
+.BR help .
+
+.SH COMMANDS
+
+.TP
+\fBgenerate\fP [\fI\--clip, -c\fP] [\fI--in-place, -i\fP | \fI--force, -f\fP] \fIpass-name [entropy-bits]\fP
+Generate a new password using the
+.BR pwmake (1)
+program of \fIentropy\-bits\fP bits of entropy (or
+\fIPASSWORD_STORE_PWQ_GENERATED_STRENGTH\fP if unspecified) and insert into
+\fIpass\-name\fP. This command is alternatively named \fBmake\fP. If
+\fI\--clip\fP or \fI-c\fP is specified, do not print the password but instead
+copy it to the clipboard using
+.BR xclip (1)
+or
+.BR wl\-clipboard (1)
+and then restore the clipboard after 45 (or \fIPASSWORD_STORE_CLIP_TIME\fP)
+seconds. If \fI\--qrcode\fP or \fI-q\fP is specified, do not print the password
+but instead display a QR code using
+.BR qrencode (1)
+either to the terminal or graphically if supported. Prompt before overwriting
+an existing password, unless \fI\--force\fP or \fI-f\fP is specified. If
+\fI\--in-place\fP or \fI-i\fP is specified, do not interactively prompt, and
+only replace the first line of the password file with the new generated
+password, keeping the remainder of the file intact.
+.TP
+\fBscore\fP [\fI\-u, --user=\fPuser] \fIpass-name\fP
+Check the quality of a password using the
+.BR pwscore (1)
+program. If provided, check similarity of the password to the username (or to
+the password file's basename if unspecified).
+.TP
+\fBfind\-weak\fP [\fI-u, --user=\fPuser] [\fI-m, --min-score=\fPmin-score] [\fIsubfolder\fP]
+List names of passwords inside the tree which score less than \fImin\-score\fP
+(or \fIPASSWORD_STORE_PWQ_MINIMUM_SCORE\fP if unspecified) using the
+.BR pwscore (1)
+program. This command is alternatively named \fBls\-weak\fP. If provided, check
+similarity of the password to the username (or to the password file's basename
+if unspecified). Optionally only search the given subdirectory.
+.TP
+\fBhelp\fP
+Show usage message.
+.TP
+\fBversion\fP
+Show version information.
+
+.SH EXAMPLES
+
+.TP
+Generate new password
+.B listeria@laptop ~ $ pass pwq generate Email/listeria.com 80
+.br
+mkdir: created directory \[u2018]/home/listeria/.password\-store/Email\[u2019]
+.br
+[master 0171d0c] Add generated password for Email/listeria.com.
+.br
+ 1 file changed, 0 insertions(+), 0 deletions(\-)
+.br
+ create mode 100644 Email/listeria.com.gpg
+.br
+The generated password for Email/listeria.com is:
+.br
+h@lWuHJUMnIRJUD(
+.TP
+Score a password
+.B listeria@laptop ~ $ pass pwq score Email/listeria.com
+.br
+Email/listeria.com 100
+.TP
+Find weak passwords in store
+.B listeria@laptop ~ $ pass pwq find\-weak
+.br
+Password Store
+.br
+\[u251C]\[u2500]\[u2500] host
+.br
+\[u2502]   \[u251C]\[u2500]\[u2500] laptop
+.br
+\[u2502]   \[u2502]   \[u2514]\[u2500]\[u2500] root 43
+.br
+\[u2502]   \[u2514]\[u2500]\[u2500] desktop
+.br
+\[u2502]       \[u2514]\[u2500]\[u2500] listeria 28
+.br
+\[u2514]\[u2500]\[u2500] exaple
+    \[u2514]\[u2500]\[u2500] weak \-
+
+.SH ENVIRONMENT VARIABLES
+
+.TP
+.I PASSWORD_STORE_PWQ_GENERATED_STRENGTH
+The default password strength if the \fIentropy\-bits\fP parameter to
+\fBgenerate\fP is unspecified.
+.TP
+.I PASSWORD_STORE_PWQ_MINIMUM_SCORE
+The default minimum score for a password to be considered strong by the
+\fBfind\-weak\fP command.
+
+.SH COPYRIGHT
+Copyright \(co 2023 Listeria monocytogenes.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+.SH SEE ALSO
+.BR pass (1),
+.BR pwmake (1),
+.BR pwscore (1),
+.BR xclip (1),
+.BR wl\-clipboard (1),
+.BR qrencode (1)
