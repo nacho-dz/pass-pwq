@@ -80,7 +80,7 @@ cmd_pwq_find_weak() {
 			relpath="${relpath%.gpg}"
 			score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | pwscore "${user:-${relpath##*/}}" 2>&-)"
 			[[ $score -ge $min_score ]] || echo "$relpath" ${score:--}
-		done < <(find -L "$PREFIX/$path" -path "$PREFIX/.git" -prune -o -name '*.gpg' -printf '%P\0') | tree -N -C --fromfile . --noreport | tail -n +2
+		done < <(find -L "$PREFIX/$path" -name '.git' -prune -o -name '*.gpg' -printf '%P\0') | tree -N -C --fromfile . --noreport | tail -n +2
 	elif [[ -z $path ]]; then
 		die "Error: password store is empty. Try \"pass init\"."
 	else
