@@ -29,7 +29,7 @@ cmd_pwq_usage() {
 	        Prompt before overwriting existing password unless forced.
 	        Optionally replace only the first line of an existing file with a new password.
 	        More information may be found in the pwmake(1) man page.
-	    $PROGRAM pwq score [-u, --user=user] [-l, --line=line-number] pass-name
+	    $PROGRAM pwq score [-u, --user=user] pass-name
 	        Check the quality of a password.
 	        If provided, check similarity of the password to the username
 	        (use the password file's basename if unspecified).
@@ -49,31 +49,25 @@ cmd_pwq_usage() {
 }
 
 cmd_pwq_find_weak() {
-	local opts user selected_line=1 min_score="$MINIMUM_SCORE"
-	opts="$($GETOPT -o u:l:m: -l user:,line:,min-score: -n "$PROGRAM" -- "$@")"
+	local opts user min_score="$MINIMUM_SCORE"
+	opts="$($GETOPT -o u:m: -l user:,min-score: -n "$PROGRAM" -- "$@")"
 	local err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
 		-u|--user) user="$2"; shift 2 ;;
-		-l|--line) selected_line="$2"; shift 2 ;;
 		-m|--min-score) min_score="$2"; shift 2 ;;
 		--) shift; break ;;
 	esac done
 
-	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [--user=user,-u user] [--line=line-number,-l line-number] [--min-score=min-score,-m min-score] [subfolder]"
+	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [-u, --user=user] [-m, --min-score=min-score] [subfolder]"
 
-	local relpath basename
+	local relpath
 	local path="$1"
 	local passfile="$PREFIX/$path.gpg"
 	check_sneaky_paths "$path"
-	[[ ${selected_line-1} =~ ^[0-9]+$ ]] || die "Line number '$selected_line' is not a number."
 	[[ $min_score =~ ^[0-9]+$ ]] || die "Minimum score '$min_score' is not a number."
 	if [[ -f $passfile ]]; then
-		if [[ ${selected_line-1} -eq 1 ]]; then
-			score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | pwscore "${user:-${path##*/}}")"
-		else
-			score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | sed -n ${selected_line}p | pwscore "${user:-${path##*/}}")"
-		fi || exit $?
+		score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | pwscore "${user:-${path##*/}}")" || exit $?
 		echo "$path" "$score"
 	elif [[ -d $PREFIX/$path ]]; then
 		if [[ -z $path ]]; then
@@ -84,12 +78,7 @@ cmd_pwq_find_weak() {
 		while IFS= read -r -d '' relpath; do
 			passfile="$PREFIX/$path/$relpath"
 			relpath="${relpath%.gpg}"
-			basename="${relpath##*/}"
-			if [[ ${selected_line-1} -eq 1 ]]; then
-				score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | pwscore "${user:-$basename}" 2>&-)"
-			else
-				score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | sed -n ${selected_line}p | pwscore "${user:-$basename}" 2>&-)"
-			fi
+			score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | pwscore "${user:-${relpath##*/}}" 2>&-)"
 			[[ $score -ge $min_score ]] || echo "$relpath" ${score:--}
 		done < <(find -L "$PREFIX/$path" -path "$PREFIX/.git" -prune -o -name '*.gpg' -printf '%P\0') | tree -N -C --fromfile . --noreport | tail -n +2
 	elif [[ -z $path ]]; then
@@ -152,28 +141,22 @@ cmd_pwq_generate() {
 }
 
 cmd_pwq_score() {
-	local opts user selected_line
-	opts="$($GETOPT -o u:l: -l user:,line: -n "$PROGRAM" -- "$@")"
+	local opts user
+	opts="$($GETOPT -o u: -l user: -n "$PROGRAM" -- "$@")"
 	local err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
 		-u|--user) user="$2"; shift 2 ;;
-		-l|--line) selected_line="$2"; shift 2 ;;
 		--) shift; break ;;
 	esac done
 
-	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [-u, --user=user] [-l, --line=line-number] pass-name"
+	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [-u, --user=user] pass-name"
 
 	local path="$1"
 	local passfile="$PREFIX/$path.gpg"
 	check_sneaky_paths "$path"
 	if [[ -f $passfile ]]; then
-		if [[ ${selected_line-1} -eq 1 ]]; then
-			score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | pwscore "${user:-${path##*/}}")"
-		else
-			[[ $selected_line =~ ^[0-9]+$ ]] || die "Line number '$selected_line' is not a number."
-			score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | sed -n ${selected_line}p | pwscore "${user:-${path##*/}}")"
-		fi || exit $?
+		score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | pwscore "${user:-${path##*/}}")" || exit $?
 		echo "$path" "$score"
 	elif [[ -d $PREFIX/$path ]]; then
 		die "Error: $path is a directory."
