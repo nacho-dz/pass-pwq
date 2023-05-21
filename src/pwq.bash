@@ -29,12 +29,12 @@ cmd_pwq_usage() {
 	        Prompt before overwriting existing password unless forced.
 	        Optionally replace only the first line of an existing file with a new password.
 	        More information may be found in the pwmake(1) man page.
-	    $PROGRAM $COMMAND score [-u, --user=user] pass-name
+	    $PROGRAM $COMMAND score [-u, --user[=user]] pass-name
 	        Check the quality of a password.
-	        If provided, check similarity of the password to the username
-	        (use the password file's basename if unspecified).
+	        Check similarity of the password to the file's basename, if the
+	        optional user argument is provided, use it instead (defaults to \$USER).
 	        More information may be found in the pwscore(1) man page.
-	    $PROGRAM $COMMAND find-weak [-u, --user=user] [-m, --min-score=min-score] [subfolder]
+	    $PROGRAM $COMMAND find-weak [-u, --user[=user]] [-m, --min-score=min-score] [subfolder]
 	        Find passwords in this password storage which score lower than min-score
 	        (or $MINIMUM_SCORE if unspecified).
 	        The optional user argument is identical to that of the score sub-command.
@@ -50,16 +50,16 @@ cmd_pwq_usage() {
 
 cmd_pwq_find_weak() {
 	local opts user min_score="$MINIMUM_SCORE"
-	opts="$($GETOPT -o u:m: -l user:,min-score: -n "$PROGRAM" -- "$@")"
+	opts="$($GETOPT -o u::m: -l user::,min-score: -n "$PROGRAM" -- "$@")"
 	local err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
-		-u|--user) user="$2"; shift 2 ;;
+		-u|--user) user="${2:-$USER}"; shift 2 ;;
 		-m|--min-score) min_score="$2"; shift 2 ;;
 		--) shift; break ;;
 	esac done
 
-	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [-u, --user=user] [-m, --min-score=min-score] [subfolder]"
+	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [-u, --user[=user]] [-m, --min-score=min-score] [subfolder]"
 
 	local relpath
 	local path="$1"
@@ -142,15 +142,15 @@ cmd_pwq_generate() {
 
 cmd_pwq_score() {
 	local opts user
-	opts="$($GETOPT -o u: -l user: -n "$PROGRAM" -- "$@")"
+	opts="$($GETOPT -o u:: -l user:: -n "$PROGRAM" -- "$@")"
 	local err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
-		-u|--user) user="$2"; shift 2 ;;
+		-u|--user) user="${2:-$USER}"; shift 2 ;;
 		--) shift; break ;;
 	esac done
 
-	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [-u, --user=user] pass-name"
+	[[ $err -ne 0 ]] && die "Usage: $PROGRAM $COMMAND $SUBCOMMAND [-u, --user[=user]] pass-name"
 
 	local path="$1"
 	local passfile="$PREFIX/$path.gpg"

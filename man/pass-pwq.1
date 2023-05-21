@@ -52,19 +52,20 @@ an existing password, unless \fI\--force\fP or \fI-f\fP is specified. If
 only replace the first line of the password file with the new generated
 password, keeping the remainder of the file intact.
 .TP
-\fBscore\fP [\fI\-u, --user=\fPuser] \fIpass-name\fP
+\fBscore\fP [\fI\-u, --user\fP[\fI=user\fP]] \fIpass-name\fP
 Check the quality of a password using the
 .BR pwscore (1)
-program. If provided, check similarity of the password to the username (or to
-the password file's basename if unspecified).
+program. Check similarity of the password to the file's basename, if the
+optional user argument is provided, use it instead (defaults to \fIUSER\fP).
 .TP
-\fBfind\-weak\fP [\fI-u, --user=\fPuser] [\fI-m, --min-score=\fPmin-score] [\fIsubfolder\fP]
+\fBfind\-weak\fP [\fI\-u, --user\fP[\fI=user\fP]] [\fI-m, --min-score=\fPmin-score] [\fIsubfolder\fP]
 List names of passwords inside the tree which score less than \fImin\-score\fP
 (or \fIPASSWORD_STORE_PWQ_MINIMUM_SCORE\fP if unspecified) using the
 .BR pwscore (1)
-program. This command is alternatively named \fBls\-weak\fP. If provided, check
-similarity of the password to the username (or to the password file's basename
-if unspecified). Optionally only search the given subdirectory.
+program. This command is alternatively named \fBls\-weak\fP. Check similarity
+of the passwords to their respective file's basename, if the optional user
+argument is provided, use it instead (defaults to \fIUSER\fP). Optionally only
+search the given subdirectory.
 .TP
 \fBhelp\fP
 Show usage message.
