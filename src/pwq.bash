@@ -79,7 +79,7 @@ cmd_pwq_find_weak() {
 			passfile="$PREFIX/$path/$relpath"
 			relpath="${relpath%.gpg}"
 			score="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | pwscore "${user:-${relpath##*/}}" 2>&-)"
-			[[ $score -ge $min_score ]] || echo "$relpath" ${score:--}
+			[[ $score -ge $min_score ]] || echo "$relpath" "${score:--}"
 		done < <(find -L "$PREFIX/$path" -name '.git' -prune -o -name '*.gpg' -printf '%P\0') | tree -N -C --fromfile . --noreport | tail -n +2
 	elif [[ -z $path ]]; then
 		die "Error: password store is empty. Try \"pass init\"."
@@ -114,7 +114,7 @@ cmd_pwq_generate() {
 
 	[[ $inplace -eq 0 && $force -eq 0 && -e $passfile ]] && yesno "An entry already exists for $path. Overwrite it?"
 
-	read -r pass < <(pwmake $bits)
+	read -r pass < <(pwmake "$bits")
         [[ -n $pass ]] || die "Could not generate password with pwmake(1)."
 	if [[ $inplace -eq 0 ]]; then
 		echo "$pass" | $GPG -e "${GPG_RECIPIENT_ARGS[@]}" -o "$passfile" "${GPG_OPTS[@]}" || die "Password encryption aborted."
