@@ -32,13 +32,12 @@ If no COMMAND is specified, COMMAND defaults to
 
 .TP
 \fBgenerate\fP [\fI\--clip, -c\fP] [\fI--in-place, -i\fP | \fI--force, -f\fP] \fIpass-name [entropy-bits]\fP
-Generate a new password using the
+Generate a new password of \fIentropy\-bits\fP bits of entropy (or
+\fIPASSWORD_STORE_PWQ_GENERATED_STRENGTH\fP if unspecified) using the
 .BR pwmake (1)
-program of \fIentropy\-bits\fP bits of entropy (or
-\fIPASSWORD_STORE_PWQ_GENERATED_STRENGTH\fP if unspecified) and insert into
-\fIpass\-name\fP. This command is alternatively named \fBmake\fP. If
-\fI\--clip\fP or \fI-c\fP is specified, do not print the password but instead
-copy it to the clipboard using
+program and insert it into \fIpass\-name\fP. This command is alternatively
+named \fBmake\fP. If \fI\--clip\fP or \fI-c\fP is specified, do not print the
+password but instead copy it to the clipboard using
 .BR xclip (1)
 or
 .BR wl\-clipboard (1)
